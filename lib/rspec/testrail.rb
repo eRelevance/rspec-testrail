@@ -8,13 +8,15 @@ module RSpec
 
       def init(hash = {})
         @options = {
-          url: hash[:url],
-          user: hash[:user],
-          password: hash[:password],
-          project_id: hash[:project_id],
-          suite_id: hash[:suite_id],
-          run_name: hash[:run_name],
-          run_description: hash[:run_description]
+            url: hash[:url],
+            user: hash[:user],
+            password: hash[:password],
+            project_id: hash[:project_id],
+            suite_id: hash[:suite_id],
+            run_name: hash[:run_name],
+            run_description: hash[:run_description],
+            milestone_id: hash[:milestone_id],
+            case_ids: hash[:case_ids]
         }
       end
 
@@ -46,23 +48,26 @@ module RSpec
 
       def testrun
         @testrun ||=
-          if testruns.empty?
-            client.send_post("add_run/#{@options[:project_id]}",
-                             suite_id: @options[:suite_id],
-                             name: @options[:run_name],
-                             description: @options[:run_description])
-          else
-            client.send_post("update_run/#{testruns[0]['id']}",
-                             description: @options[:run_description])
-          end
+            if testruns.empty?
+              client.send_post("add_run/#{@options[:project_id]}",
+                               suite_id: @options[:suite_id],
+                               name: @options[:run_name],
+                               description: @options[:run_description],
+                               milestone_id: @options[:milestone_id],
+                               include_all: false,
+                               case_ids: @options[:case_ids])
+            else
+              client.send_post("update_run/#{testruns[0]['id']}",
+                               description: @options[:run_description])
+            end
       end
 
       def testruns
         @testruns ||= client.send_get("get_runs/#{@options[:project_id]}")
-                            .select do |run|
-                              run['suite_id'] == @options[:suite_id].to_i && \
-                                run['name'].include?(@options[:run_name])
-                            end
+                          .select do |run|
+          run['suite_id'] == @options[:suite_id].to_i && \
+            run['name'].include?(@options[:run_name])
+        end
       end
     end
   end
